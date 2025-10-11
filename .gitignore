@@ -1,3 +1,8 @@
+# build stuff
+.vs/
+out/
+build/
+
 # Prerequisites
 *.d
 
@@ -39,3 +44,6 @@
 
 # debug information files
 *.dwo
+
+# git stuff
+.gitattributes
