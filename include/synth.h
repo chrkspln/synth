@@ -290,18 +290,17 @@ public:
 
     void timerCallback() override
     {
-        // --- 1. Animation Logic (no changes) ---
         bool needs_repaint = false;
         for (auto& pair : visual_notes)
         {
             auto& v = pair.second;
-            // If this note has an active splash animation...
+            // if this note has an active animation...
             if (v.splash_opacity > 0.0f)
             {
                 // ...update its properties.
                 v.splash_radius += 1.5f;   // velocity of expansion of the splash
                 v.splash_opacity -= 0.02f; // velocity of fading out the splash
-                needs_repaint = true;      // to redraw
+                needs_repaint = true;      // request redraw
             }
         }
 
@@ -310,12 +309,10 @@ public:
             repaint();
         }
 
-        // --- 2. NEW Melody Playback Logic ---
         if (is_playing_melody)
         {
             const double currentTime = (juce::Time::getMillisecondCounter() / 1000.0) - melody_start_time;
 
-            // Check if it's time to START the next note
             if (next_melody_note_index < melody.size())
             {
                 const auto& note = melody[next_melody_note_index];
@@ -326,17 +323,15 @@ public:
                 }
             }
 
-            // Check all notes in the melody to see if it's time to STOP them
             for (const auto& note : melody)
             {
                 const double noteEndTime = note.startTimeSecs + note.durationSecs;
-                if (currentTime >= noteEndTime && currentTime < noteEndTime + 0.05) // Small window to send "note off"
+				if (currentTime >= noteEndTime && currentTime < noteEndTime + 0.05) // small buffer to ensure note is stopped
                 {
                     stopNote(note.keyCode);
                 }
             }
             
-            // Stop playback after the last note has finished
             if (next_melody_note_index >= melody.size() && currentTime > melody.back().startTimeSecs + melody.back().durationSecs + 1.0)
             {
                 is_playing_melody = false;
@@ -353,20 +348,15 @@ public:
         {
             const auto& v = pair.second;
 
-            // --- 1. DRAW THE SPLASH EFFECT (UNDERNEATH) ---
             if (v.splash_opacity > 0.0f)
             {
-                // Set the color to the note's color but with the current splash opacity
                 g.setColour(v.base_colour.withAlpha(v.splash_opacity));
-                // Calculate the splash circle's current diameter
                 float splashDiameter = v.bounds.getWidth() + v.splash_radius;
-                // Draw the splash as an outline, centered on the main circle
                 g.drawEllipse(v.bounds.getCentreX() - splashDiameter / 2,
                               v.bounds.getCentreY() - splashDiameter / 2,
                               splashDiameter, splashDiameter, 2.0f);
             }
 
-            // --- 2. DRAW THE MAIN CIRCLE (ON TOP) ---
             if (v.is_lit)
             {
                 g.setColour(v.base_colour);
@@ -436,7 +426,6 @@ public:
                 }
             }
 
-            // Write the final mixed sample to both channels
             leftBuffer[sample]  = mix_sample * speakers_ch_amplitude;
             rightBuffer[sample] = mix_sample * speakers_ch_amplitude;
         }
@@ -491,10 +480,7 @@ public:
                 {
                     // it's not, the key has been released. fading out
                     stopNote(voice.key_code);
-                    //voice.is_active = false;
                     log("Key OFF: '" + std::to_string(voice.key_code) + "' -> Starting fade out.");
-                    //visual_notes[voice.key_code].is_lit = false;
-                    //repaint();
                 }
             }
         }
